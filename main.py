@@ -1,8 +1,18 @@
 from auth import autenticar
-from cadastro import email_disponivel, email_valido, registrar_usuario
+from cadastro import (
+    PERFIL_ALUNO,
+    PERFIL_MOTORISTA,
+    codigo_motorista_valido,
+    email_disponivel,
+    email_valido,
+    obter_perfil,
+    registrar_usuario,
+)
+from motorista import exibir_lista_hoje
 from presenca import registrar_presenca, validar_qrcode
 
 MAX_TENTATIVAS_QRCODE = 3
+MAX_TENTATIVAS_CODIGO_MOTORISTA = 3
 
 
 def exibir_menu() -> str:
@@ -17,10 +27,13 @@ def exibir_menu() -> str:
         print("Opção inválida. Digite 1, 2 ou 3.\n")
 
 
-def login() -> str:
+def login() -> str | None:
     print("\n=== LOGIN ===")
+    print("(Deixe o e-mail em branco e pressione Enter para voltar ao menu)\n")
     while True:
         usuario = input("E-mail: ").strip()
+        if not usuario:
+            return None
         senha = input("Senha: ").strip()
         if autenticar(usuario, senha):
             print(f"\nBem-vindo(a), {usuario}!\n")
@@ -36,8 +49,37 @@ def solicitar_campo_obrigatorio(rotulo: str) -> str:
         print("Este campo é obrigatório.\n")
 
 
-def registro() -> str:
+def escolher_perfil() -> str:
+    print("\nTipo de cadastro:")
+    print("1 - Aluno")
+    print("2 - Motorista")
+    while True:
+        opcao = input("Escolha uma opção: ").strip()
+        if opcao == "1":
+            return PERFIL_ALUNO
+        if opcao == "2":
+            return PERFIL_MOTORISTA
+        print("Opção inválida. Digite 1 ou 2.\n")
+
+
+def autorizar_motorista() -> bool:
+    """Evita que qualquer pessoa crie conta de motorista e veja a lista de alunos."""
+    for _ in range(MAX_TENTATIVAS_CODIGO_MOTORISTA):
+        codigo = input("Código de autorização de motorista: ").strip()
+        if codigo_motorista_valido(codigo):
+            return True
+        print("Código inválido.\n")
+    print("Número máximo de tentativas atingido. Cadastro cancelado.")
+    return False
+
+
+def registro() -> str | None:
     print("\n=== REGISTRO ===")
+    perfil = escolher_perfil()
+    if perfil == PERFIL_MOTORISTA and not autorizar_motorista():
+        return None
+
+
     nome_completo = solicitar_campo_obrigatorio("Nome completo: ")
 
     while True:
@@ -50,7 +92,7 @@ def registro() -> str:
             continue
         break
 
-    faculdade = solicitar_campo_obrigatorio("Faculdade: ")
+    faculdade = solicitar_campo_obrigatorio("Faculdade: ") if perfil == PERFIL_ALUNO else ""
     telefone = solicitar_campo_obrigatorio("Telefone: ")
 
     while True:
@@ -60,7 +102,7 @@ def registro() -> str:
             break
         print("As senhas não coincidem. Tente novamente.\n")
 
-    registrar_usuario(nome_completo, email, faculdade, telefone, senha)
+    registrar_usuario(nome_completo, email, faculdade, telefone, senha, perfil)
     print(f"\nCadastro realizado com sucesso! Bem-vindo(a), {nome_completo}!\n")
     return email
 
@@ -89,6 +131,30 @@ def solicitar_qrcode() -> bool:
     return False
 
 
+def fluxo_aluno(usuario: str) -> None:
+    if perguntar_assinatura():
+        assinatura_confirmada = solicitar_qrcode()
+        registrar_presenca(usuario, assinatura_confirmada)
+    else:
+        print("\nOk, assinatura não realizada.")
+        registrar_presenca(usuario, False)
+
+
+def fluxo_motorista() -> None:
+    while True:
+        print("=== MENU DO MOTORISTA ===")
+        print("1 - Ver lista de alunos de hoje")
+        print("2 - Voltar ao menu principal")
+        opcao = input("Escolha uma opção: ").strip()
+        if opcao == "1":
+            exibir_lista_hoje()
+        elif opcao == "2":
+            return
+        else:
+            print("Opção inválida. Digite 1, 2 ou 3.")
+        print()
+
+
 def main() -> None:
     while True:
         try:
@@ -98,14 +164,13 @@ def main() -> None:
                 break
 
             usuario = login() if opcao == "1" else registro()
-            assinou_lista = perguntar_assinatura()
+            if usuario is None:
+                continue
 
-            if assinou_lista:
-                assinatura_confirmada = solicitar_qrcode()
-                registrar_presenca(usuario, assinatura_confirmada)
+            if obter_perfil(usuario) == PERFIL_MOTORISTA:
+                fluxo_motorista()
             else:
-                print("\nOk, assinatura não realizada.")
-                registrar_presenca(usuario, False)
+                fluxo_aluno(usuario)
 
         except (EOFError, KeyboardInterrupt):
             print("\n\nEncerrando o programa.")

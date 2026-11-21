@@ -27,3 +27,11 @@ def registrar_presenca(usuario: str, assinou: bool) -> None:
         escritor.writerow(
             [usuario, datetime.now().isoformat(timespec="seconds"), "sim" if assinou else "nao"]
         )
+
+
+def carregar_registros() -> list[dict]:
+    """Retorna todas as linhas do CSV de presença como dicionários."""
+    if not REGISTROS_PATH.exists():
+        return []
+    with open(REGISTROS_PATH, "r", newline="", encoding="utf-8") as arquivo:
+        return list(csv.DictReader(arquivo))

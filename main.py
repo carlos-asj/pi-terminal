@@ -2,6 +2,7 @@ from auth import autenticar
 from cadastro import (
     PERFIL_ALUNO,
     PERFIL_MOTORISTA,
+    carregar_cadastros,
     codigo_motorista_valido,
     email_disponivel,
     email_valido,
@@ -36,7 +37,8 @@ def login() -> str | None:
             return None
         senha = input("Senha: ").strip()
         if autenticar(usuario, senha):
-            print(f"\nBem-vindo(a), {usuario}!\n")
+            nome = carregar_cadastros().get(usuario, {}).get("nome_completo", usuario)
+            print(f"\nBem-vindo(a), {nome}!\n")
             return usuario
         print("Usuário ou senha inválidos. Tente novamente.\n")
 

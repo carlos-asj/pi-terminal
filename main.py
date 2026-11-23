@@ -14,6 +14,7 @@ from presenca import registrar_presenca, validar_qrcode
 
 MAX_TENTATIVAS_QRCODE = 3
 MAX_TENTATIVAS_CODIGO_MOTORISTA = 3
+MAX_TENTATIVAS_LOGIN = 5
 
 
 def exibir_menu() -> str:
@@ -31,7 +32,7 @@ def exibir_menu() -> str:
 def login() -> str | None:
     print("\n=== LOGIN ===")
     print("(Deixe o e-mail em branco e pressione Enter para voltar ao menu)\n")
-    while True:
+    for _ in range(MAX_TENTATIVAS_LOGIN):
         usuario = input("E-mail: ").strip()
         if not usuario:
             return None
@@ -41,7 +42,8 @@ def login() -> str | None:
             print(f"\nBem-vindo(a), {nome}!\n")
             return usuario
         print("Usuário ou senha inválidos. Tente novamente.\n")
-
+    print("Número máximo de tentativas atingido. Voltando ao menu.")
+    return None
 
 def solicitar_campo_obrigatorio(rotulo: str) -> str:
     while True:

@@ -1,5 +1,4 @@
 import json
-import re
 from pathlib import Path
 
 from auth import USUARIOS_PATH, carregar_usuarios, hash_senha
@@ -10,11 +9,8 @@ CODIGO_MOTORISTA_PATH = Path(__file__).parent / "dados" / "codigo_motorista.json
 PERFIL_ALUNO = "aluno"
 PERFIL_MOTORISTA = "motorista"
 
-EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-
-
 def email_valido(email: str) -> bool:
-    return bool(EMAIL_REGEX.match(email))
+    return bool(email.strip())
 
 
 def email_disponivel(email: str) -> bool:

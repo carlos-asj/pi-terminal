@@ -153,7 +153,7 @@ def fluxo_motorista() -> None:
         elif opcao == "2":
             return
         else:
-            print("Opção inválida. Digite 1, 2 ou 3.")
+            print("Opção inválida. Digite 1 ou 2.")
         print()
 
 
